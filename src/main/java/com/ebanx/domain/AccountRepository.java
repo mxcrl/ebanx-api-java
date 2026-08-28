@@ -1,5 +1,7 @@
 package com.ebanx.domain;
 
+import org.springframework.stereotype.Repository;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -13,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * were, this is the only class that would need to change - everything
  * above it depends only on find / findOrCreate / reset.
  */
+@Repository
 public final class AccountRepository {
 
     private final Map<String, Account> accounts = new ConcurrentHashMap<>();

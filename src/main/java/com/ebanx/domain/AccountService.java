@@ -1,5 +1,7 @@
 package com.ebanx.domain;
 
+import org.springframework.stereotype.Service;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -9,6 +11,7 @@ import java.util.Map;
  * That separation is what keeps this layer trivial to unit test and
  * reusable if the transport ever changes.
  */
+@Service
 public final class AccountService {
 
     private final AccountRepository repository;

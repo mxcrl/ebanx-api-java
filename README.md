@@ -1,8 +1,10 @@
-# EBANX API — Java 21
+# EBANX API — Spring Boot (Java 21)
 
-Same exercise as the Node version, rebuilt in plain Java 21 with **zero
-external dependencies** — just the JDK. That's a deliberate choice: no
-Maven/Gradle setup needed, `javac`/`java` is enough.
+A small in-memory "banking" API, built on **Spring Boot 3.3 + Java 21 (LTS)**.
+Java 21 is the current Java LTS release (supported through at least 2031)
+with mature, widely-audited tooling — a sensible baseline for a fintech
+service. Spring Boot 3.3 targets that same JDK baseline and is a stable,
+broadly deployed release line.
 
 ## Endpoints
 
@@ -26,25 +28,23 @@ Maven/Gradle setup needed, `javac`/`java` is enough.
 
 ```
 src/main/java/com/ebanx/
-  Main.java                    entrypoint — starts the server on $PORT (default 3000)
+  EbanxApiApplication.java     Spring Boot entrypoint
   domain/                      business logic — no HTTP concepts appear here
     Account.java                mutable balance (AtomicLong, thread-safe)
-    AccountRepository.java      in-memory storage (ConcurrentHashMap)
+    AccountRepository.java      in-memory storage (ConcurrentHashMap), @Repository
     AccountNotFoundException.java
     MalformedEventException.java
     Event.java                  sealed interface: permits Deposit, Withdraw, Transfer
     Deposit.java / Withdraw.java / Transfer.java   records implementing Event
-    EventParser.java            turns raw JSON into a validated Event (or throws)
-    AccountService.java         deposit/withdraw/transfer rules + exhaustive event dispatch
-  http/                         transport layer — translates HTTP <-> domain
-    Json.java                   dependency-free JSON parser/serializer
-    QueryParser.java
-    HttpSupport.java            shared request/response helpers
-    ResetHandler.java / BalanceHandler.java / EventHandler.java
-    Router.java
-    ServerFactory.java          composition root (wires domain + HTTP together)
+    EventParser.java            turns a parsed JSON body into a validated Event (or throws)
+    AccountService.java         deposit/withdraw/transfer rules + exhaustive event dispatch, @Service
+  web/                          transport layer — translates HTTP <-> domain
+    AccountController.java      @RestController for /reset, /balance, /event
+    GlobalExceptionHandler.java @RestControllerAdvice mapping domain exceptions to HTTP responses
+src/main/resources/
+  application.yml               server.port bound to $PORT (default 3000)
 src/test/java/com/ebanx/
-  EndToEndTest.java             starts a real server on an ephemeral port and hits it over HTTP
+  EndToEndTest.java             @SpringBootTest on a random port, driven with TestRestTemplate
 ```
 
 ## Why it's built this way (resilience notes)
@@ -52,55 +52,53 @@ src/test/java/com/ebanx/
 - **Sealed `Event` hierarchy + exhaustive `switch`**: `Event` permits exactly
   `Deposit`, `Withdraw`, `Transfer`. `AccountService.apply` switches over it
   without a `default` branch — if a new event type is ever added and someone
-  forgets to handle it here, **the project won't compile**. That's a compiler-
-  enforced guardrail against a whole class of "silently does nothing" bugs.
+  forgets to handle it here, **the project won't compile**.
 - **Validation lives in one place** (`EventParser`): every malformed-input
   path — missing type, unknown type, missing field, non-numeric or
   non-integer amount — is checked before any domain logic runs, and always
-  throws the same `MalformedEventException`, which the HTTP layer maps to a
-  single, predictable `400`.
-- **Every HTTP handler is wrapped in try/catch/finally**: an unexpected bug
-  in one request becomes a `500` response, never a crashed server or a
-  connection the client hangs waiting on forever (`exchange.close()` always
-  runs).
+  throws the same `MalformedEventException`, which `GlobalExceptionHandler`
+  maps to a single, predictable `400`.
+- **Centralized exception handling**: `GlobalExceptionHandler`
+  (`@RestControllerAdvice`) is the only place that decides HTTP status
+  codes — `AccountNotFoundException` -> `404`, `MalformedEventException` /
+  unparsable JSON -> `400`, anything unforeseen -> `500`. The controller
+  itself never touches a status code for the error paths.
 - **Thread-safety by construction**: `Account.balance` is an `AtomicLong`
   and `AccountRepository` is backed by `ConcurrentHashMap` with
   `computeIfAbsent`, so two concurrent requests touching the same account
-  (e.g. two deposits racing to create it) can't corrupt state or double-create
-  an account. The server also runs each request on its own JDK 21 virtual
-  thread (`Executors.newVirtualThreadPerTaskExecutor()`), so one slow request
-  can't starve the others.
+  (e.g. two deposits racing to create it) can't corrupt state or
+  double-create an account.
 - **Domain has zero HTTP knowledge**: `AccountService` and `EventParser`
-  never see an `HttpExchange` or a status code — they throw
+  never see a servlet request or a status code — they throw
   `AccountNotFoundException` / `MalformedEventException`, and only the
-  `http` package decides what those become on the wire. That's what lets
-  `EndToEndTest` (or a future proper unit test) exercise the rules directly.
-- **Hand-rolled but real JSON parsing**: `Json.java` is a genuine
-  recursive-descent parser (handles escapes, nesting, numbers correctly)
-  rather than string-splitting hacks, so malformed bodies fail predictably
-  instead of doing something undefined.
+  `web` package decides what those become on the wire. That's what lets
+  the domain classes be unit-tested directly, with no server involved.
 
 ## Running it
 
-Requires JDK 21.
+Requires JDK 21 (Maven wrapper not included — use a locally installed Maven).
 
 ```bash
-# compile
-javac -d out $(find src/main/java -name "*.java")
-
-# run (defaults to port 3000; override with PORT env var)
-java -cp out com.ebanx.Main
+mvn spring-boot:run
 ```
+
+Listens on port `3000` by default; override with the `PORT` env var.
 
 ## Running the tests
 
 ```bash
-javac -d out -cp out $(find src/test/java -name "*.java")
-java -cp out com.ebanx.EndToEndTest
+mvn test
 ```
 
-This starts a real `HttpServer` on an ephemeral port and drives it with
-`java.net.http.HttpClient` — no mocking, no test framework dependency —
-covering the 9 example scenarios from the assignment plus a handful of
-edge cases (negative balances, malformed JSON, unknown event type, missing
-fields, non-integer amounts).
+`EndToEndTest` boots the full Spring context on a random port and drives it
+with `TestRestTemplate` — no mocking of the domain layer — covering the 9
+example scenarios from the assignment plus a handful of edge cases (negative
+balances, malformed JSON, unknown event type, missing fields, non-integer
+amounts).
+
+## Building a jar
+
+```bash
+mvn package
+java -jar target/ebanx-api-java-0.0.1-SNAPSHOT.jar
+```

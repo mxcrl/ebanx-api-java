@@ -1,0 +1,6 @@
+server:
+  port: ${PORT:3000}
+
+spring:
+  application:
+    name: ebanx-api-java
