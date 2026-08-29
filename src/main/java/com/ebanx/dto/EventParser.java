@@ -1,4 +1,6 @@
-package com.ebanx.domain;
+package com.ebanx.dto;
+
+import com.ebanx.exception.MalformedEventException;
 
 import java.util.Map;
 

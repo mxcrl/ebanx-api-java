@@ -1,4 +1,4 @@
-package com.ebanx.domain;
+package com.ebanx.exception;
 
 /**
  * Thrown when an operation requires an account that doesn't exist

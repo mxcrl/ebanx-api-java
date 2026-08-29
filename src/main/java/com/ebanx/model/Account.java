@@ -1,4 +1,4 @@
-package com.ebanx.domain;
+package com.ebanx.model;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

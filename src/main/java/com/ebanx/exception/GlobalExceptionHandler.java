@@ -1,7 +1,5 @@
-package com.ebanx.web;
+package com.ebanx.exception;
 
-import com.ebanx.domain.AccountNotFoundException;
-import com.ebanx.domain.MalformedEventException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

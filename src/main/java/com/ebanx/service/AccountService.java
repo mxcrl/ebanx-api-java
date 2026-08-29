@@ -1,5 +1,12 @@
-package com.ebanx.domain;
+package com.ebanx.service;
 
+import com.ebanx.dto.Deposit;
+import com.ebanx.dto.Event;
+import com.ebanx.dto.Transfer;
+import com.ebanx.dto.Withdraw;
+import com.ebanx.exception.AccountNotFoundException;
+import com.ebanx.model.Account;
+import com.ebanx.repository.AccountRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;

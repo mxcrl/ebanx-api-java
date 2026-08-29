@@ -1,8 +1,8 @@
-package com.ebanx.web;
+package com.ebanx.controller;
 
-import com.ebanx.domain.AccountService;
-import com.ebanx.domain.Event;
-import com.ebanx.domain.EventParser;
+import com.ebanx.dto.Event;
+import com.ebanx.dto.EventParser;
+import com.ebanx.service.AccountService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

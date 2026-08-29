@@ -1,5 +1,6 @@
-package com.ebanx.domain;
+package com.ebanx.repository;
 
+import com.ebanx.model.Account;
 import org.springframework.stereotype.Repository;
 
 import java.util.Map;

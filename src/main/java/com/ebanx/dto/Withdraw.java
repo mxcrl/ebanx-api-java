@@ -1,4 +1,4 @@
-package com.ebanx.domain;
+package com.ebanx.dto;
 
 public record Withdraw(String origin, long amount) implements Event {
 }

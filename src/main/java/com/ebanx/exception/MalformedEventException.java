@@ -1,4 +1,4 @@
-package com.ebanx.domain;
+package com.ebanx.exception;
 
 /**
  * Thrown when the request body doesn't describe a valid event: an

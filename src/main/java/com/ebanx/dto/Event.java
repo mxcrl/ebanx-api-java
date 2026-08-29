@@ -1,4 +1,4 @@
-package com.ebanx.domain;
+package com.ebanx.dto;
 
 /**
  * All events the system understands. Sealed to a fixed set of records
