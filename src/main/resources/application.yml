@@ -4,3 +4,9 @@ server:
 spring:
   application:
     name: ebanx-api-java
+
+logging:
+  level:
+    com.ebanx: ${LOG_LEVEL:INFO}
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"

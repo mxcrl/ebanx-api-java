@@ -7,6 +7,8 @@ import com.ebanx.dto.Withdraw;
 import com.ebanx.exception.AccountNotFoundException;
 import com.ebanx.model.Account;
 import com.ebanx.repository.AccountRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
@@ -21,6 +23,8 @@ import java.util.Map;
 @Service
 public final class AccountService {
 
+    private static final Logger log = LoggerFactory.getLogger(AccountService.class);
+
     private final AccountRepository repository;
 
     public AccountService(AccountRepository repository) {
@@ -28,6 +32,7 @@ public final class AccountService {
     }
 
     public void reset() {
+        log.info("Resetting all accounts");
         repository.reset();
     }
 
@@ -45,6 +50,7 @@ public final class AccountService {
     public Account deposit(String destinationId, long amount) {
         Account account = repository.findOrCreate(destinationId);
         account.deposit(amount);
+        log.info("Deposit: account={} amount={} newBalance={}", destinationId, amount, account.getBalance());
         return account;
     }
 
@@ -57,9 +63,11 @@ public final class AccountService {
     public Account withdraw(String originId, long amount) {
         Account account = repository.find(originId);
         if (account == null) {
+            log.warn("Withdraw failed: account={} not found", originId);
             throw new AccountNotFoundException(originId);
         }
         account.withdraw(amount);
+        log.info("Withdraw: account={} amount={} newBalance={}", originId, amount, account.getBalance());
         return account;
     }
 
@@ -72,6 +80,7 @@ public final class AccountService {
      * @throws AccountNotFoundException if originId doesn't exist
      */
     public EventResult transfer(String originId, String destinationId, long amount) {
+        log.info("Transfer: origin={} destination={} amount={}", originId, destinationId, amount);
         Account origin = withdraw(originId, amount);
         Account destination = deposit(destinationId, amount);
         return new EventResult(origin, destination);

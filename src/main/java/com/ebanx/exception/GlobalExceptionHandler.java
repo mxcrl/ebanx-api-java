@@ -1,5 +1,7 @@
 package com.ebanx.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +20,11 @@ import java.util.Map;
 @RestControllerAdvice
 public final class GlobalExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(AccountNotFoundException.class)
     public ResponseEntity<String> handleAccountNotFound(AccountNotFoundException exception) {
+        log.info("Handled AccountNotFoundException -> 404: {}", exception.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .contentType(MediaType.TEXT_PLAIN)
                 .body("0");
@@ -27,11 +32,13 @@ public final class GlobalExceptionHandler {
 
     @ExceptionHandler({MalformedEventException.class, HttpMessageNotReadableException.class})
     public ResponseEntity<Map<String, Object>> handleBadRequest(Exception exception) {
+        log.warn("Handled bad request -> 400: {}", exception.getMessage());
         return ResponseEntity.badRequest().body(Map.of("error", String.valueOf(exception.getMessage())));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleUnexpected(Exception exception) {
+        log.error("Unhandled exception -> 500", exception);
         return ResponseEntity.internalServerError().body(Map.of("error", "Internal Server Error"));
     }
 }

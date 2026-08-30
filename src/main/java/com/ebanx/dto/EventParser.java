@@ -1,6 +1,8 @@
 package com.ebanx.dto;
 
 import com.ebanx.exception.MalformedEventException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -12,26 +14,34 @@ import java.util.Map;
  */
 public final class EventParser {
 
+    private static final Logger log = LoggerFactory.getLogger(EventParser.class);
+
     private EventParser() {
     }
 
     public static Event parse(Map<String, Object> json) {
         if (json == null) {
+            log.warn("Rejected event: request body is null");
             throw new MalformedEventException("Request body must be a JSON object");
         }
 
         String type = requireString(json, "type");
         long amount = requireAmount(json);
 
-        return switch (type) {
+        Event event = switch (type) {
             case "deposit" -> new Deposit(requireString(json, "destination"), amount);
             case "withdraw" -> new Withdraw(requireString(json, "origin"), amount);
             case "transfer" -> new Transfer(
                     requireString(json, "origin"),
                     requireString(json, "destination"),
                     amount);
-            default -> throw new MalformedEventException("Unknown event type: \"" + type + "\"");
+            default -> {
+                log.warn("Rejected event: unknown type \"{}\"", type);
+                throw new MalformedEventException("Unknown event type: \"" + type + "\"");
+            }
         };
+        log.debug("Parsed event: {}", event);
+        return event;
     }
 
     private static String requireString(Map<String, Object> json, String field) {
