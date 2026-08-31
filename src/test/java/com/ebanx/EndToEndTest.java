@@ -58,6 +58,22 @@ class EndToEndTest {
     }
 
     @Test
+    void plainTextEndpointsAnswerEvenWhenClientAsksForJson() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(java.util.List.of(MediaType.APPLICATION_JSON));
+
+        ResponseEntity<String> reset = restTemplate.exchange(
+                "/reset", HttpMethod.POST, new HttpEntity<>(headers), String.class);
+        assertThat(reset.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(reset.getBody()).isEqualTo("OK");
+
+        ResponseEntity<String> balance = restTemplate.exchange(
+                "/balance?account_id=1234", HttpMethod.GET, new HttpEntity<>(headers), String.class);
+        assertThat(balance.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(balance.getBody()).isEqualTo("0");
+    }
+
+    @Test
     void depositCreatesAnAccount() {
         ResponseEntity<String> res = postEvent("{\"type\":\"deposit\",\"destination\":\"100\",\"amount\":10}");
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.CREATED);

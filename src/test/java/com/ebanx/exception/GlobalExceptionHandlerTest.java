@@ -43,6 +43,15 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void springMvcExceptionsKeepTheirOwn4xxStatus() {
+        ResponseEntity<Map<String, Object>> response = handler.handleUnexpected(
+                new org.springframework.web.HttpMediaTypeNotAcceptableException("no match"));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_ACCEPTABLE);
+        assertThat(response.getBody()).containsKey("error");
+    }
+
+    @Test
     void anythingElseBecomes500WithoutLeakingDetail() {
         ResponseEntity<Map<String, Object>> response =
                 handler.handleUnexpected(new IllegalStateException("secret internal detail"));

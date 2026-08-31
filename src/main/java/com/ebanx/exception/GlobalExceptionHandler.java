@@ -3,9 +3,11 @@ package com.ebanx.exception;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -38,6 +40,17 @@ public final class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleUnexpected(Exception exception) {
+        // Spring's own MVC failures (unacceptable Accept header, wrong method,
+        // unsupported media type, ...) implement ErrorResponse and already
+        // carry the right 4xx status. Honour it instead of masking every one
+        // of them as a 500.
+        if (exception instanceof ErrorResponse errorResponse) {
+            HttpStatusCode status = errorResponse.getStatusCode();
+            log.warn("Handled {} -> {}", exception.getClass().getSimpleName(), status.value());
+            return ResponseEntity.status(status)
+                    .body(Map.of("error", String.valueOf(exception.getMessage())));
+        }
+
         log.error("Unhandled exception -> 500", exception);
         return ResponseEntity.internalServerError().body(Map.of("error", "Internal Server Error"));
     }

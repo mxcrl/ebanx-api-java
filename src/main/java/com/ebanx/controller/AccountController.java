@@ -31,29 +31,36 @@ public final class AccountController {
         this.accountService = accountService;
     }
 
-    @PostMapping(value = "/reset", produces = MediaType.TEXT_PLAIN_VALUE)
+    // These endpoints answer in plain text. The content type is set on the
+    // response body rather than via `produces` on the mapping: `produces`
+    // makes Spring reject the request with 406 when the caller sends, say,
+    // `Accept: application/json`, which several HTTP clients and proxies do.
+    // The spec wants the text body returned regardless of the Accept header.
+
+    @PostMapping("/reset")
     public ResponseEntity<String> reset() {
         log.info("POST /reset");
         accountService.reset();
-        return ResponseEntity.ok("OK");
+        return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body("OK");
     }
 
-    @GetMapping(value = "/balance", produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping("/balance")
     public ResponseEntity<String> balance(
             @RequestParam(name = "account_id", required = false) String accountId) {
         log.info("GET /balance account_id={}", accountId);
         if (accountId == null || accountId.isBlank()) {
             log.warn("GET /balance rejected: missing account_id query parameter");
-            return ResponseEntity.badRequest().body("Missing account_id query parameter");
+            return ResponseEntity.badRequest().contentType(MediaType.TEXT_PLAIN)
+                    .body("Missing account_id query parameter");
         }
 
         Long balance = accountService.getBalance(accountId);
         if (balance == null) {
             log.info("GET /balance account_id={} not found", accountId);
-            return ResponseEntity.status(404).body("0");
+            return ResponseEntity.status(404).contentType(MediaType.TEXT_PLAIN).body("0");
         }
         log.debug("GET /balance account_id={} balance={}", accountId, balance);
-        return ResponseEntity.ok(String.valueOf(balance));
+        return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(String.valueOf(balance));
     }
 
     @PostMapping("/event")
