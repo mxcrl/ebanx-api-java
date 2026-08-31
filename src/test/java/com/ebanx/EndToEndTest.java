@@ -46,6 +46,18 @@ class EndToEndTest {
     }
 
     @Test
+    void balanceWithoutAccountIdIsBadRequest() {
+        ResponseEntity<String> res = restTemplate.getForEntity("/balance", String.class);
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void emptyBodyToEventIsBadRequest() {
+        ResponseEntity<String> res = postEvent("");
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     void depositCreatesAnAccount() {
         ResponseEntity<String> res = postEvent("{\"type\":\"deposit\",\"destination\":\"100\",\"amount\":10}");
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.CREATED);
