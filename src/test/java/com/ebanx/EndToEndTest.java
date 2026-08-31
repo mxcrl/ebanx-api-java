@@ -21,7 +21,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * mocks - so a green run here means the actual wire behaviour is
  * correct, not just some internal call path.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        // give the rate limiter plenty of headroom so the functional suite never trips it
+        properties = {
+                "ratelimit.capacity=100000",
+                "ratelimit.refill-period-seconds=1"
+        })
 class EndToEndTest {
 
     @Autowired

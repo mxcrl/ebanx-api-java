@@ -1,9 +1,17 @@
 server:
   port: ${PORT:3000}
+  tomcat:
+    max-swallow-size: 2MB
+    max-http-form-post-size: 2MB
 
 spring:
   application:
     name: ebanx-api-java
+
+# Simple in-memory token-bucket rate limit, keyed by client IP.
+ratelimit:
+  capacity: ${RATE_LIMIT_CAPACITY:100}
+  refill-period-seconds: ${RATE_LIMIT_REFILL_SECONDS:1}
 
 logging:
   level:

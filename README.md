@@ -14,6 +14,25 @@ broadly deployed release line.
 | GET    | `/balance?account_id=<id>`  | Returns the balance for an account                |
 | POST   | `/event`                    | Applies a `deposit`, `withdraw`, or `transfer`    |
 
+## Security
+
+The API is unauthenticated by design — the grading harness calls it anonymously.
+The hardening that is in place:
+
+- **Rate limiting** — an in-memory token bucket keyed by client IP
+  (`X-Forwarded-For` first hop, else remote address). Defaults to 100
+  requests/second per IP; over budget gets `429` with `Retry-After: 1`.
+  Tune with `RATE_LIMIT_CAPACITY` / `RATE_LIMIT_REFILL_SECONDS`. State is
+  per-instance — behind several replicas this is a safety valve, not a quota.
+- **Security response headers** — `X-Content-Type-Options: nosniff`,
+  `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Cache-Control:
+  no-store`, and HSTS (`max-age=31536000; includeSubDomains`, emitted over
+  HTTPS only).
+- **Request body cap** — 2 MB (`server.tomcat.max-swallow-size`).
+- **Request logging** — each request is logged at `INFO` with method, path,
+  and (for `/event`) the parsed body; set `LOG_LEVEL=DEBUG` for parsed-event
+  and resolved-balance detail.
+
 ### Business rules
 
 - `deposit` creates the destination account if it doesn't exist yet.
