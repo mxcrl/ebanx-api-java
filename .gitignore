@@ -1,3 +1,9 @@
+# Build
+target/
 out/
 *.class
-target/
+
+# IntelliJ
+.idea/
+*.iml
+*.iws
